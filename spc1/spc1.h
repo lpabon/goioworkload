@@ -55,7 +55,7 @@ typedef struct spc1_io_s {
 	unsigned int	bsu;		/* which bsu? */
 	unsigned int	pos;		/* in units of 4KB */
 	unsigned int	when;		/* when to do this I/O in units of 0.1 milliseconds */
-} ssss;
+} spc1_ios_t;
 
 /*
  * Error codes
