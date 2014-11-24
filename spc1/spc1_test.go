@@ -38,6 +38,9 @@ func TestNewSpc1Io(t *testing.T) {
 	if s.Stream < 1 || s.Stream > 7 {
 		t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
 	}
+	if s.Offset >= 45 {
+		t.Errorf("Offset out of bounds: %d\n", s.Offset)
+	}
 }
 
 func TestSpc1Generate(t *testing.T) {
