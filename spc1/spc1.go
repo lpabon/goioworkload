@@ -19,6 +19,7 @@ package spc1
 import "C"
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -77,4 +78,20 @@ func (s *Spc1Io) Generate() {
 	s.Stream = uint32(s.spc1_ios.stream)
 	s.Offset = uint32(s.spc1_ios.pos)
 	s.When = time.Millisecond / 10 * time.Duration(s.spc1_ios.when)
+}
+
+func (s *Spc1Io) String() string {
+	return fmt.Sprintf("asu=%v:"+
+		"rw=%v:"+
+		"blocks=%v:"+
+		"stream=%v:"+
+		"offset=%v:"+
+		"when=%v\n",
+		s.Asu,
+		s.Isread,
+		s.Blocks,
+		s.Stream,
+		s.Offset,
+		s.When)
+
 }
