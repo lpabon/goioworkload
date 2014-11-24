@@ -38,7 +38,7 @@ type Spc1Io struct {
 	// Offset in units of 4KB
 	Offset uint32
 
-	// When to do this I/O in uints of 0.1 milliseconds
+	// When to do this I/O from the start of the run
 	When time.Duration
 
 	spc1_ios C.spc1_ios_t

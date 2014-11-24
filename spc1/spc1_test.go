@@ -15,8 +15,8 @@
 package spc1
 
 import (
-	goon "github.com/shurcooL/go-goon"
 	"testing"
+	"time"
 )
 
 func TestSpc1Init(t *testing.T) {
@@ -38,7 +38,49 @@ func TestNewSpc1Io(t *testing.T) {
 	if s.Stream < 1 || s.Stream > 7 {
 		t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
 	}
-	goon.Dump(s)
+}
+
+func TestSpc1Generate(t *testing.T) {
+	asu1, asu2 := uint32(45*1024*1024/4), uint32(45*1024*1024/4)
+	asu3 := uint32(10 * 1024 * 1024 / 4)
+
+	// 50 BSUs, each BSU doing 50 Iops
+	// Total IOPs should be ~2500
+	Spc1Init(50, 1, asu1, asu2, asu3)
+
+	s := NewSpc1Io(1)
+	ios := 10000
+	start := time.Now()
+	lastiotime := start
+	for i := 0; i < ios; i++ {
+		s.Generate()
+		sleep_time := start.Add(s.When).Sub(lastiotime)
+		if sleep_time > 0 {
+			time.Sleep(sleep_time)
+		}
+		lastiotime = time.Now()
+
+		/*
+			fmt.Printf("%d:asu=%v:"+
+				"rw=%v:"+
+				"blocks=%v:"+
+				"stream=%v:"+
+				"offset=%v:"+
+				"when=%v\n",
+				i,
+				s.Asu,
+				s.Isread,
+				s.Blocks,
+				s.Stream,
+				s.Offset,
+				s.When)
+		*/
+	}
+	end := time.Now()
+	iops := float64(ios) / end.Sub(start).Seconds()
+	if iops < 2450 || iops > 2550 {
+		t.Errorf("Incorrect number of Iops: %.2f\n", iops)
+	}
 }
 
 /*
