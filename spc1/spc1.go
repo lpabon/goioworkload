@@ -81,12 +81,14 @@ func (s *Spc1Io) Generate() {
 }
 
 func (s *Spc1Io) String() string {
-	return fmt.Sprintf("asu=%v:"+
+	return fmt.Sprintf("ctxt=%v:"+
+		"asu=%v:"+
 		"rw=%v:"+
 		"blocks=%v:"+
 		"stream=%v:"+
 		"offset=%v:"+
 		"when=%v\n",
+		s.context,
 		s.Asu,
 		s.Isread,
 		s.Blocks,

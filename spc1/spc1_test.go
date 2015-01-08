@@ -15,6 +15,7 @@
 package spc1
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -62,28 +63,38 @@ func TestSpc1Generate(t *testing.T) {
 			time.Sleep(sleep_time)
 		}
 		lastiotime = time.Now()
-
-		/*
-			fmt.Printf("%d:asu=%v:"+
-				"rw=%v:"+
-				"blocks=%v:"+
-				"stream=%v:"+
-				"offset=%v:"+
-				"when=%v\n",
-				i,
-				s.Asu,
-				s.Isread,
-				s.Blocks,
-				s.Stream,
-				s.Offset,
-				s.When)
-		*/
 	}
 	end := time.Now()
 	iops := float64(ios) / end.Sub(start).Seconds()
 	if iops < 2450 || iops > 2550 {
 		t.Errorf("Incorrect number of Iops: %.2f\n", iops)
 	}
+}
+
+func TestSpc1Contexts(t *testing.T) {
+	asu1, asu2 := uint32(45), uint32(45)
+	asu3 := uint32(10)
+	contexts := 4
+
+	// 50 BSUs, each BSU doing 50 Iops
+	// Total IOPs should be ~2500
+	Spc1Init(50, contexts, asu1, asu2, asu3)
+
+	for context := 1; context <= contexts; context++ {
+		s := NewSpc1Io(context)
+		s.Generate()
+		fmt.Print(s)
+		if s.Asu < 1 || s.Asu > 3 {
+			t.Errorf("Illegal value of s.Asu: %d\n", s.Asu)
+		}
+		if s.Stream < 1 || s.Stream > 7 {
+			t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
+		}
+		if s.Offset >= 45 {
+			t.Errorf("Offset out of bounds: %d\n", s.Offset)
+		}
+	}
+
 }
 
 /*
