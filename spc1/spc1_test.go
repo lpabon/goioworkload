@@ -16,6 +16,7 @@ package spc1
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 )
@@ -36,7 +37,7 @@ func TestNewSpc1Io(t *testing.T) {
 	if s.Asu < 1 || s.Asu > 3 {
 		t.Errorf("Illegal value of s.Asu: %d\n", s.Asu)
 	}
-	if s.Stream < 1 || s.Stream > 7 {
+	if s.Stream < 0 || s.Stream > 7 {
 		t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
 	}
 	if s.Offset >= 45 {
@@ -87,14 +88,63 @@ func TestSpc1Contexts(t *testing.T) {
 		if s.Asu < 1 || s.Asu > 3 {
 			t.Errorf("Illegal value of s.Asu: %d\n", s.Asu)
 		}
-		if s.Stream < 1 || s.Stream > 7 {
+		if s.Stream < 0 || s.Stream > 7 {
 			t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
 		}
 		if s.Offset >= 45 {
 			t.Errorf("Offset out of bounds: %d\n", s.Offset)
 		}
 	}
+}
 
+func context_tester(wg *sync.WaitGroup, context int, t *testing.T) {
+	defer wg.Done()
+
+	start := time.Now()
+	lastiotime := start
+	for io := 1; io < 10000; io++ {
+		s := NewSpc1Io(context)
+		s.Generate()
+
+		if s.Asu < 1 || s.Asu > 3 {
+			t.Errorf("Illegal value of s.Asu: %d\n", s.Asu)
+		}
+		if s.Stream < 0 || s.Stream > 7 {
+			t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
+		}
+
+		// Check how much time we should wait
+		sleep_time := start.Add(s.When).Sub(lastiotime)
+		if sleep_time > 0 {
+			time.Sleep(sleep_time)
+		}
+		lastiotime = time.Now()
+	}
+}
+
+func TestSpc1ConcurrentContexts(t *testing.T) {
+	asu1, asu2 := uint32(45*1024*1024/4), uint32(45*1024*1024/4)
+	asu3 := uint32(10 * 1024 * 1024 / 4)
+	contexts := 8
+
+	// 100 BSUs, each BSU doing 50 Iops
+	// Total IOPs should be ~5k
+	Spc1Init(100, contexts, asu1, asu2, asu3)
+
+	var wg sync.WaitGroup
+	start := time.Now()
+	for context := 1; context <= contexts; context++ {
+		wg.Add(1)
+		go context_tester(&wg, context, t)
+	}
+	wg.Wait()
+	end := time.Now()
+
+	iops := int(float64(10000*contexts) / end.Sub(start).Seconds())
+
+	if iops < 4500 || iops > 5500 {
+		t.Errorf("Incorrect number of iops")
+	}
 }
 
 /*

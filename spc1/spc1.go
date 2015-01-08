@@ -70,14 +70,30 @@ func NewSpc1Io(context int) *Spc1Io {
 	}
 }
 
-func (s *Spc1Io) Generate() {
-	C.spc1_next_op(&s.spc1_ios, C.int(s.context))
+func (s *Spc1Io) Generate() error {
+	eval := C.spc1_next_op(&s.spc1_ios, C.int(s.context))
+	if eval < 0 {
+		return fmt.Errorf("Sp1Io Error Generate(): %v\n", eval)
+	}
 	s.Asu = uint32(s.spc1_ios.asu)
 	s.Blocks = uint32(s.spc1_ios.len)
 	s.Isread = s.spc1_ios.dir == 0
 	s.Stream = uint32(s.spc1_ios.stream)
 	s.Offset = uint32(s.spc1_ios.pos)
 	s.When = time.Millisecond / 10 * time.Duration(s.spc1_ios.when)
+
+	return nil
+}
+
+// Invariant interface from godbc
+func (s *Spc1Io) Invariant() bool {
+	if s.Asu < 1 || s.Asu > 3 {
+		return false
+	}
+	if s.Stream < 0 || s.Stream > 7 {
+		return false
+	}
+	return true
 }
 
 func (s *Spc1Io) String() string {
