@@ -42,7 +42,7 @@ type Spc1Io struct {
 	// When to do this I/O from the start of the run
 	When time.Duration
 
-	spc1_ios C.spc1_ios_t
+	spc1_ios C.spc1_io_t
 	context  int
 }
 

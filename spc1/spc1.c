@@ -926,7 +926,7 @@ gen_io_i(struct spc1_io_s *spc1_io, struct state_block_s *sp)
 }
 
 int
-spc1_next_op(struct spc1_io_s *s, int context)
+spc1_next_op(spc1_io_t *s, int context)
 {
 	struct state_block_s *sp;
 	int retcode;

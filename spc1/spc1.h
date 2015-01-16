@@ -55,7 +55,7 @@ typedef struct spc1_io_s {
 	unsigned int	bsu;		/* which bsu? */
 	unsigned int	pos;		/* in units of 4KB */
 	unsigned int	when;		/* when to do this I/O in units of 0.1 milliseconds */
-} spc1_ios_t;
+} spc1_io_t;
 
 /*
  * Error codes
@@ -91,7 +91,7 @@ enum {
  * use different values of context.
  *
  */
-int spc1_next_op(struct spc1_io_s *, int context);
+int spc1_next_op(spc1_io_t *, int context);
 
 /*
  * Generate the next operation in any context.
