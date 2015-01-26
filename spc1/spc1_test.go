@@ -125,11 +125,12 @@ func context_tester(wg *sync.WaitGroup, context int, t *testing.T) {
 func TestSpc1ConcurrentContexts(t *testing.T) {
 	asu1, asu2 := uint32(45*1024*1024/4), uint32(45*1024*1024/4)
 	asu3 := uint32(10 * 1024 * 1024 / 4)
-	contexts := 8
+	bsu := 200
+	contexts := int((bsu + 99) / 100)
 
-	// 100 BSUs, each BSU doing 50 Iops
+	// 200 BSUs, each BSU doing 50 Iops
 	// Total IOPs should be ~5k
-	Spc1Init(100, contexts, asu1, asu2, asu3)
+	Spc1Init(bsu, contexts, asu1, asu2, asu3)
 
 	var wg sync.WaitGroup
 	start := time.Now()
@@ -142,80 +143,7 @@ func TestSpc1ConcurrentContexts(t *testing.T) {
 
 	iops := int(float64(10000*contexts) / end.Sub(start).Seconds())
 
-	if iops < 4500 || iops > 5500 {
+	if iops < 9500 || iops > 10500 {
 		t.Errorf("Incorrect number of iops")
 	}
 }
-
-/*
-var ios_sent uint64
-var blocks uint64
-
-func workload(wg *sync.WaitGroup, context, ios int) {
-	var s C.spc1_ios_t
-
-	defer wg.Done()
-
-	start := time.Now()
-	for i := 0; i < ios; i++ {
-		C.spc1_next_op(&s, C.int(context))
-		a := time.Millisecond / 10 * time.Duration(s.when)
-		b := time.Now().Sub(start)
-		sleep_time := a - b
-		//fmt.Printf("a=%v:b=%v:", a, b)
-		if sleep_time > 0 {
-			time.Sleep(sleep_time)
-			//fmt.Printf("%v\n", sleep_time)
-		} else {
-			//fmt.Print("_\n")
-		}
-		atomic.AddUint64(&ios_sent, uint64(1))
-		atomic.AddUint64(&blocks, uint64(s.len))
-
-		// send the io
-		time.Sleep(time.Millisecond * 20)
-			fmt.Printf("%d:%d:asu=%v:"+
-				"rw=%v:"+
-				"len=%v:"+
-				"stream=%v:"+
-				"bsu=%v:"+
-				"offset=%v:"+
-				"when=%v\n",
-				i, context,
-				s.asu,
-				s.dir,
-				s.len,
-				s.stream,
-				s.bsu,
-				s.pos,
-				s.when)
-	}
-}
-
-func main() {
-	var wg sync.WaitGroup
-
-	contexts := 10
-	C.spc1_init(C.CString("test"),
-		50,              // bsu
-		45*1024*1024/4,  // 45G as 4k blocks
-		45*1024*1024/4,  // 45G as 4k blocks
-		10*1024*1024/4,  // 10G as 4k blocks
-		C.int(contexts), // contexts
-		nil,             // version
-		0)
-
-	ios := 1000
-	start := time.Now()
-	for context := 0; context < contexts; context++ {
-		wg.Add(1)
-		go workload(&wg, context, ios)
-	}
-	wg.Wait()
-	end := time.Now()
-	fmt.Printf("IOPS = %v\n",
-		float64(ios_sent)/end.Sub(start).Seconds())
-	fmt.Printf("Bw = %.2f MB/s\n",
-		float64(blocks*4*1024)/end.Sub(start).Seconds())
-}
-*/
