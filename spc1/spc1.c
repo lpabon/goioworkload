@@ -562,7 +562,7 @@ static int
 asu1_1(struct state_block_s *sp)
 {
 	sp->io_heap->i_next_time += tnext(IN035);
-	sp->io_heap->i_op = (rnd(10) < 5)? OP_READ: OP_WRITE;
+	sp->io_heap->i_op = (rnd(100) < 75)? OP_READ: OP_WRITE;
 	sp->io_heap->i_len = 1;
 	sp->io_heap->i_block_addr = rnd(asu1_size);
 	return SPC1_ENOERR;
@@ -577,7 +577,7 @@ asu1_2(struct state_block_s *sp)
 			return retcode;
 	}
 	sp->io_heap->i_next_time += tnext(IN281);
-	sp->io_heap->i_op = (rnd(10) < 5)? OP_READ: OP_WRITE;
+	sp->io_heap->i_op = (rnd(100) < 75)? OP_READ: OP_WRITE;
 	sp->io_heap->i_len = 1;
 	/* the hrrw stuff is computed at launch time, not now */
 	return SPC1_ENOERR;
@@ -614,7 +614,7 @@ asu1_4(struct state_block_s *sp)
 			return retcode;
 	}
 	sp->io_heap->i_next_time += tnext(IN210);
-	sp->io_heap->i_op = (rnd(10) < 5)? OP_READ: OP_WRITE;
+	sp->io_heap->i_op = (rnd(100) < 75)? OP_READ: OP_WRITE;
 	sp->io_heap->i_len = 1;
 	/* the hrrw stuff is computed at launch time, not now */
 	return SPC1_ENOERR;
@@ -624,7 +624,7 @@ static int
 asu2_1(struct state_block_s *sp)
 {
 	sp->io_heap->i_next_time += tnext(IN018);
-	sp->io_heap->i_op = (rnd(10) < 3)? OP_READ: OP_WRITE;
+	sp->io_heap->i_op = (rnd(100) < 60)? OP_READ: OP_WRITE;
 	sp->io_heap->i_len = 1;
 
 	if (hrrw_style == HRRW_CLASSIC) /* XXX FIXME do this always? */
@@ -643,7 +643,7 @@ asu2_2(struct state_block_s *sp)
 			return retcode;
 	}
 	sp->io_heap->i_next_time += tnext(IN070);
-	sp->io_heap->i_op = (rnd(10) < 3)? OP_READ: OP_WRITE;
+	sp->io_heap->i_op = (rnd(100) < 60)? OP_READ: OP_WRITE;
 	sp->io_heap->i_len = 1;
 	/* the hrrw stuff is computed at launch time, not now */
 	return SPC1_ENOERR;
@@ -835,8 +835,9 @@ gen_io_i(struct spc1_io_s *spc1_io, struct state_block_s *sp)
 		default:
 			break;
 		}
-		if (retcode)
+		if (retcode) {
 			return retcode;
+		}
 
 #ifdef VALIDATE
 		switch(stream_id_to_asu[sp->io_heap->i_stream_id]) {
@@ -906,8 +907,9 @@ gen_io_i(struct spc1_io_s *spc1_io, struct state_block_s *sp)
 		return SPC1_EASU;
 	}
 #ifdef VALIDATE
-	if (ignore)
+	if (ignore) {
 		goto again;
+	}
 #endif
 
 	/*
@@ -1082,12 +1084,22 @@ spc1_init(char *m,
 		/*
 		 * Initialize each of the streams
 		 */
-		for (j = 0; j < sp->stream_count; j++) {
-			struct spc1_io_s spc1_io;
+		struct spc1_io_s spc1_io;
+		int max;
+		max = sp->stream_count*100;
+		spc1_io.asu = 0;
+		for (j = 0; spc1_io.asu == 0 && j < max; j++) {
 			retcode = gen_io_i(&spc1_io, sp);
 			if (retcode)
 				return retcode;
 			requeue(sp);
+		}
+
+		/*
+		 * Check we were able to initialize streams
+		 */
+		if (j == max) {
+			return SPC1_EINIT;
 		}
 	}
 	return SPC1_ENOERR;

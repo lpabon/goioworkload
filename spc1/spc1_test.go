@@ -17,8 +17,17 @@ package spc1
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
+)
+
+type Meter struct {
+	reads, writes uint64
+}
+
+var (
+	asu1m, asu2m Meter
 )
 
 func TestSpc1Init(t *testing.T) {
@@ -104,15 +113,34 @@ func context_tester(wg *sync.WaitGroup, context int, t *testing.T) {
 	lastiotime := start
 	for io := 1; io < 10000; io++ {
 		s := NewSpc1Io(context)
-		s.Generate()
+		err := s.Generate()
+		if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
 
 		if s.Asu < 1 || s.Asu > 3 {
 			t.Errorf("Illegal value of s.Asu: %d\n", s.Asu)
+			t.FailNow()
 		}
 		if s.Stream < 0 || s.Stream > 7 {
 			t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
+			t.FailNow()
 		}
 
+		if s.Asu == 1 {
+			if s.Isread {
+				atomic.AddUint64(&asu1m.reads, 1)
+			} else {
+				atomic.AddUint64(&asu1m.writes, 1)
+			}
+		} else if s.Asu == 2 {
+			if s.Isread {
+				atomic.AddUint64(&asu2m.reads, 1)
+			} else {
+				atomic.AddUint64(&asu2m.writes, 1)
+			}
+		}
 		// Check how much time we should wait
 		sleep_time := start.Add(s.When).Sub(lastiotime)
 		if sleep_time > 0 {
@@ -123,22 +151,27 @@ func context_tester(wg *sync.WaitGroup, context int, t *testing.T) {
 }
 
 func TestSpc1ConcurrentContexts(t *testing.T) {
-	asu1, asu2 := uint32(45*1024*1024/4), uint32(45*1024*1024/4)
-	asu3 := uint32(10 * 1024 * 1024 / 4)
+	asu1, asu2 := uint32(45000), uint32(45000)
+	asu3 := uint32(10000)
 	bsu := 200
 	contexts := int((bsu + 99) / 100)
 
 	// 200 BSUs, each BSU doing 50 Iops
 	// Total IOPs should be ~5k
-	Spc1Init(bsu, contexts, asu1, asu2, asu3)
+	err := Spc1Init(bsu, contexts, asu1, asu2, asu3)
+	if err != nil {
+		t.Error(err)
+		t.FailNow()
+	}
 
 	var wg sync.WaitGroup
 	start := time.Now()
-	for context := 1; context <= contexts; context++ {
+	for context := 0; context < contexts; context++ {
 		wg.Add(1)
 		go context_tester(&wg, context, t)
 	}
 	wg.Wait()
+
 	end := time.Now()
 
 	iops := int(float64(10000*contexts) / end.Sub(start).Seconds())
@@ -146,4 +179,9 @@ func TestSpc1ConcurrentContexts(t *testing.T) {
 	if iops < 9500 || iops > 10500 {
 		t.Errorf("Incorrect number of iops")
 	}
+
+	fmt.Printf("ASU1 Read Rate = %.4f\n"+
+		"ASU2 Read Rate = %.4f\n",
+		float64(asu1m.reads)/float64(asu1m.reads+asu1m.writes),
+		float64(asu2m.reads)/float64(asu2m.reads+asu2m.writes))
 }

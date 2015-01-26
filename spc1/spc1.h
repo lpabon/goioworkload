@@ -66,6 +66,7 @@ enum {
     SPC1_ESTYLE = -2,           /* Illegal HRRW style */
     SPC1_EHRRW  = -3,           /* Internal HRRW error */
     SPC1_EASU   = -4,           /* Internal ASU error */
+    SPC1_EINIT  = -5,           /* Unable to initialize */
 };
 
 /*

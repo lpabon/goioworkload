@@ -50,9 +50,9 @@ type Spc1Io struct {
 // contexts: Number of contexts
 // asuXsize: Size in 4k blocks
 func Spc1Init(bsus, contexts int,
-	asu1size, asu2size, asu3size uint32) {
+	asu1size, asu2size, asu3size uint32) error {
 
-	C.spc1_init(C.CString("gospc1"),
+	eval := C.spc1_init(C.CString("gospc1"),
 		C.int(bsus),
 		C.uint(asu1size),
 		C.uint(asu2size),
@@ -60,6 +60,11 @@ func Spc1Init(bsus, contexts int,
 		C.int(contexts),
 		nil,
 		0)
+	if eval < 0 {
+		return fmt.Errorf("Spc1 unable to initialize\n")
+	}
+
+	return nil
 }
 
 // Must have called Spc1Init() to initalize
