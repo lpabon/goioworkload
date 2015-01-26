@@ -22,14 +22,14 @@ import (
 )
 
 func TestSpc1Init(t *testing.T) {
-	asu1, asu2 := uint32(45), uint32(45)
-	asu3 := uint32(10)
+	asu1, asu2 := uint32(4500), uint32(4500)
+	asu3 := uint32(1000)
 	Spc1Init(50, 1, asu1, asu2, asu3)
 }
 
 func TestNewSpc1Io(t *testing.T) {
-	asu1, asu2 := uint32(45), uint32(45)
-	asu3 := uint32(10)
+	asu1, asu2 := uint32(4500), uint32(4500)
+	asu3 := uint32(1000)
 	Spc1Init(50, 1, asu1, asu2, asu3)
 
 	s := NewSpc1Io(1)
@@ -40,7 +40,7 @@ func TestNewSpc1Io(t *testing.T) {
 	if s.Stream < 0 || s.Stream > 7 {
 		t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
 	}
-	if s.Offset >= 45 {
+	if s.Offset >= 4500 {
 		t.Errorf("Offset out of bounds: %d\n", s.Offset)
 	}
 }
@@ -73,8 +73,8 @@ func TestSpc1Generate(t *testing.T) {
 }
 
 func TestSpc1Contexts(t *testing.T) {
-	asu1, asu2 := uint32(45), uint32(45)
-	asu3 := uint32(10)
+	asu1, asu2 := uint32(4500), uint32(4500)
+	asu3 := uint32(1000)
 	contexts := 4
 
 	// 50 BSUs, each BSU doing 50 Iops
@@ -91,7 +91,7 @@ func TestSpc1Contexts(t *testing.T) {
 		if s.Stream < 0 || s.Stream > 7 {
 			t.Errorf("Illegal value of s.Stream: %d\n", s.Stream)
 		}
-		if s.Offset >= 45 {
+		if s.Offset >= 4500 {
 			t.Errorf("Offset out of bounds: %d\n", s.Offset)
 		}
 	}
